@@ -22,6 +22,14 @@ C) A hybrid stacked pipeline in which five intermediate regressors (OA, CA, MA, 
 Both the single-stage (Base Regressor) and the two-stage stacked model achieved similar error metrics on the test set, with RMSE, MedAE, explained variance ($\sigma^2$), and adjusted $R^2$ of 18.4, 2.5, 0.13, and 0, respectively, as shown in Figure 1. This indicates that the stacked model for the event-index regressor does not substantially reduce overall AHI error nor increase the variance explained. Performance of the models across all data splits is presented in `results\regres_classif_xgboost_summary`.
 ![Regression Metrics](results/regres_classif_xgboost_summary/regression_metrics.png)
 
+#### Base Regressor (A)
+True vs predicted AHI for the base regressor. We see that the model is not able to properly predict the moderate and severe cases from the data 
+![Regression Metrics](results/regres_classif_xgboost_summary/ahi_log1p_true_vs_pred_percentiles_val.png)
+
+When compared the distributions of the predictions and hue by the AHI severities, we can observe how the severity classes overimpose within each other
+![Regression Metrics](results/regres_classif_xgboost_summary/ahi_log1p_true_vs_hist_val.png)
+
+
 
 ### Classification 
 The following Figure compares test‐set performance across our six classification models. The single‐stage binary classifier achieves the highest overall discrimination (accuracy = 0.736, precision = 0.759, sensitivity = 0.880, F1 = 0.815), whereas its stacked counterpart trades off sensitivity for precision (accuracy = 0.568, precision = 0.842, sensitivity = 0.429, F1 = 0.569). In the fifteen‐class task, stacking boosts sensitivity (0.804 vs. 0.572) and F1 (0.575 vs. 0.520) at the expense of accuracy (0.622 vs. 0.664) and precision (0.448 vs. 0.477). Both single‐stage and stacked four‐class models perform least well—accuracies hover around 0.40 with F1 scores below 0.40—though the stacked version yields modest gains across all four metrics. Full results for all splits are reported in  `results\regres_classif_xgboost_summary`.
