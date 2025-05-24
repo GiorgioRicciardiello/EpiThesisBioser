@@ -36,6 +36,7 @@ import pathlib
 from typing import  Optional, List, Union, Tuple
 import json
 import pickle
+from scipy.special import gammaln
 
 from fontTools.tfmLib import PASSTHROUGH
 
@@ -605,8 +606,12 @@ def train_xgb_collect(
                 verbose_eval=False,
             )
             pred = bst.predict(dval)
-
             # === Score: Quadratic Weighted Kappa ===
+            def _poisson_nll(y_true, y_pred):
+                eps = 1e-9  # avoid log(0)
+                y_pred = np.clip(y_pred, eps, None)
+                return np.mean(y_pred - y_true * np.log(y_pred) + gammaln(y_true + 1))
+
             def compute_score(pred, y_true, p):
                 if p["objective"] == "multi:softprob":
                     pred_labels = np.argmax(pred, axis=1)
@@ -618,6 +623,8 @@ def train_xgb_collect(
                     return log_loss(y_true, pred_labels)
                 elif p["objective"].startswith("reg:"):
                     return np.sqrt(mean_squared_error(y_true, pred))
+                elif p["objective"] == "reg:poisson":
+                    return _poisson_nll(y_true, pred)
                 else:
                     raise ValueError(f"No scoring rule defined for objective '{p['objective']}'")
 
@@ -1212,6 +1219,11 @@ def train_xgb_collect_defined_folds(
             pred = bst.predict(dval)
 
             # === Score: Quadratic Weighted Kappa ===
+            def _poisson_nll(y_true, y_pred):
+                eps = 1e-9  # avoid log(0)
+                y_pred = np.clip(y_pred, eps, None)
+                return np.mean(y_pred - y_true * np.log(y_pred) + gammaln(y_true + 1))
+
             def compute_score(pred, y_true, p):
                 if p["objective"] == "multi:softprob":
                     pred_labels = np.argmax(pred, axis=1)
@@ -1223,6 +1235,8 @@ def train_xgb_collect_defined_folds(
                     return log_loss(y_true, pred_labels)
                 elif p["objective"].startswith("reg:"):
                     return np.sqrt(mean_squared_error(y_true, pred))
+                elif p["objective"] == "reg:poisson":
+                    return _poisson_nll(y_true, pred)
                 else:
                     raise ValueError(f"No scoring rule defined for objective '{p['objective']}'")
 
@@ -2390,12 +2404,12 @@ def plot_true_pred_histograms_stacked(df_eval: pd.DataFrame,
         ax.set_xlim([0, x_max * 1.05])
 
         # Only bottom plot gets x-label
-        if col == 'Pred':
-            ax.set_xlabel("AHI")
-        else:
-            ax.set_xlabel("")
+        # if col == 'Pred':
+        #     ax.set_xlabel("AHI")
+        # else:
+        #     ax.set_xlabel("")
 
-    axes[-1].set_xlabel("AHI")
+    # axes[-1].set_xlabel(col)
     # Shared hue legend
     hue_handles = [Patch(facecolor=palette[i], label=label) for i, label in enumerate(hue_order)]
 

@@ -18,7 +18,7 @@ if __name__ == '__main__':
     # %% Input data
     PCA_reduced_dim = True
     N_BOOSTING_ROUNDS = 1500
-    N_TRIALS = 45
+    N_TRIALS = 28
     log1p = True
     stratify_col = 'osa_four'
     target_ahi_regressor = 'ahi_log1p'
@@ -31,9 +31,8 @@ if __name__ == '__main__':
 
     print(f'Dataset dimensions {df_data.shape}')
     # %% output directory
-    path_dir = config.get('results')['dir'].joinpath('regres_classif_xgboost')
+    path_dir = config.get('results')['dir'].joinpath('test_base_models')
     path_dir.mkdir(parents=True, exist_ok=True)
-    path_regressors = path_dir.joinpath('xgb_regressors.pkl')
     # %% define the output
     t_col = 'resp-position-total'
     df_data['sleep_hours'] = df_data[t_col] / 60.0
@@ -127,30 +126,30 @@ if __name__ == '__main__':
     # # ======== TRAIN REGRESSOR ========
     regressor_objectives = [
         # GAMMA
-        {'objective': 'reg:gamma', 'eval_metric': 'rmse', 'max_bin': 256},
         {'objective': 'reg:gamma', 'eval_metric': 'rmse', 'max_bin': 512},
+        {'objective': 'reg:gamma', 'eval_metric': 'rmse', 'max_bin': 1024},
 
         # SQUARED ERROR
-        {'objective': 'reg:squarederror', 'eval_metric': 'rmse', 'max_bin': 256},
         {'objective': 'reg:squarederror', 'eval_metric': 'rmse', 'max_bin': 512},
+        {'objective': 'reg:squarederror', 'eval_metric': 'rmse', 'max_bin': 1024},
 
         # TWEEDIE - 1.5
         {'objective': 'reg:tweedie', 'eval_metric': 'tweedie-nloglik@1.5', 'tweedie_variance_power': 1.5,
-         'max_bin': 256},
+         'max_bin': 1024},
         {'objective': 'reg:tweedie', 'eval_metric': 'tweedie-nloglik@1.5', 'tweedie_variance_power': 1.5,
-         'max_bin': 512},
+         'max_bin': 1024},
 
         # TWEEDIE - 1.3
         {'objective': 'reg:tweedie', 'eval_metric': 'tweedie-nloglik@1.3', 'tweedie_variance_power': 1.3,
-         'max_bin': 256},
+         'max_bin': 1024},
         {'objective': 'reg:tweedie', 'eval_metric': 'tweedie-nloglik@1.3', 'tweedie_variance_power': 1.3,
-         'max_bin': 512},
+         'max_bin': 1024},
 
         # POISSON
-        {'objective': 'count:poisson', 'eval_metric': 'rmse', 'max_bin': 512},
+        {'objective': 'count:poisson', 'eval_metric': 'rmse', 'max_bin': 1024},
 
         # HUBER LOSS for robust regression (used with outlier-heavy data)
-        {'objective': 'reg:pseudohubererror', 'eval_metric': 'mae', 'max_bin': 512}
+        {'objective': 'reg:pseudohubererror', 'eval_metric': 'mae', 'max_bin': 1024}
     ]
 
 
@@ -158,7 +157,7 @@ if __name__ == '__main__':
     for params in regressor_objectives:
         obj = params['objective'].replace(':', '')
         metric = params['eval_metric'].replace('@', '_')
-        bin_size = params.get('max_bin', 256)
+        bin_size = params.get('max_bin', 1024)
         output_path = path_dir.joinpath(f'regressor_{obj}_{metric}')
         output_path.mkdir(parents=True, exist_ok=True)
 

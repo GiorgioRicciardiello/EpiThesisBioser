@@ -1,0 +1,19 @@
+group,split,class_label,accuracy,precision,sensitivity,f1_score,tp,fp,fn,tn,model
+test,test_true,global,0.736,0.759,0.88,0.815,,,,,Single Binary
+train,train_true,global,0.945,0.964,0.963,0.964,,,,,Single Binary
+val,val_true,global,0.862,0.894,0.925,0.909,,,,,Single Binary
+test,test_true,global,0.664,0.477,0.572,0.52,,,,,Single Fifteen
+train,train_true,global,0.994,0.989,1.0,0.994,,,,,Single Fifteen
+val,val_true,global,0.833,0.785,0.916,0.846,,,,,Single Fifteen
+test,test_true,global,0.403,0.37,0.368,0.367,,,,,Single 4-Class
+train,train_true,global,0.971,0.971,0.971,0.971,,,,,Single 4-Class
+val,val_true,global,0.712,0.703,0.711,0.706,,,,,Single 4-Class
+test,test_true,global,0.568,0.842,0.429,0.569,,,,,Stacked Binary
+train,train_true,global,0.707,0.952,0.587,0.727,,,,,Stacked Binary
+val,val_true,global,0.574,0.837,0.44,0.577,,,,,Stacked Binary
+test,test_true,global,0.622,0.448,0.804,0.575,,,,,Stacked Fifteen
+train,train_true,global,0.71,0.524,0.956,0.677,,,,,Stacked Fifteen
+val,val_true,global,0.615,0.441,0.799,0.568,,,,,Stacked Fifteen
+test,test_true,global,0.419,0.412,0.392,0.395,,,,,Stacked 4-Class
+train,train_true,global,0.589,0.59,0.616,0.598,,,,,Stacked 4-Class
+val,val_true,global,0.425,0.416,0.402,0.404,,,,,Stacked 4-Class

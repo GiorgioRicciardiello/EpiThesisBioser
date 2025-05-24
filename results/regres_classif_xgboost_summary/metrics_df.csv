@@ -1,0 +1,22 @@
+group,split,rmse,medae,explained_variance,r2_adj,model
+test,test_true,18.399,5.315,0.132,-0.002,Single Regressor (AHI)
+train,train_true,11.189,2.239,0.795,0.754,Single Regressor (AHI)
+val,val_true,15.756,4.623,0.591,0.508,Single Regressor (AHI)
+test,test_true,18.67,5.148,0.136,0.004,Stacked Regressor (AHI)
+train,train_true,16.448,4.03,0.352,0.25,Stacked Regressor (AHI)
+val,val_true,18.626,5.08,0.149,0.018,Stacked Regressor (AHI)
+test,test_true,3.788,0.332,0.005,-0.063,CA/h
+train,train_true,0.424,0.138,0.989,0.989,CA/h
+val,val_true,4.015,0.325,0.02,-0.027,CA/h
+test,test_true,3.046,0.886,0.206,0.175,Hypopneas/h
+train,train_true,1.861,0.749,0.704,0.695,Hypopneas/h
+val,val_true,2.948,0.887,0.255,0.242,Hypopneas/h
+test,test_true,2.089,0.267,-0.027,-0.065,MA/h
+train,train_true,0.471,0.188,0.956,0.937,MA/h
+val,val_true,2.085,0.264,0.005,-0.01,MA/h
+test,test_true,8.809,1.924,0.047,-0.011,OA/h
+train,train_true,3.818,1.29,0.831,0.828,OA/h
+val,val_true,8.962,1.867,0.076,0.038,OA/h
+test,test_true,1.729,0.646,0.15,0.082,RERA/h
+train,train_true,1.204,0.584,0.569,0.523,RERA/h
+val,val_true,1.562,0.643,0.209,0.169,RERA/h
