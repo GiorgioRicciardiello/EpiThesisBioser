@@ -39,7 +39,7 @@ import pathlib
 import pandas as pd
 import numpy as np
 from scipy import stats
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 from statsmodels.stats.contingency_tables import mcnemar
 from scipy.stats import shapiro, f_oneway, kruskal, chi2, chi2_contingency
 from config.config import config,encoding
@@ -275,7 +275,7 @@ def stratified_tests(df: pd.DataFrame,
     for var in ['sleepy', 'tired', 'alert']:
         # Prepare grouped data
         series = df[f'delta_{var}']
-        grouped = {lab: series[df[strata] == lab].dropna().values
+        grouped = {int(lab): series[df[strata] == lab].dropna().values
                    for lab in df[strata].unique()}
         n = sum(len(gv) for gv in grouped.values())
 
@@ -366,8 +366,6 @@ def stratified_tests(df: pd.DataFrame,
     return df_records_kruskal,df_records_pair_wise, df_records_binary
 
 # %% explore objective measures across subjective response → Do patients who feel worse actually have more apneas?
-
-
 def generate_qq_grid_colored(df: pd.DataFrame,
                              variables: List[str],
                              group_col: str,
@@ -647,6 +645,121 @@ def stratified_posthoc_continuous_by_ordinal_group(df: pd.DataFrame,
     return df_kw, df_posthoc
 
 
+def plot_posthoc_grid(
+        path: pathlib.Path,
+        perception: str,
+        output_path: Optional[pathlib.Path] = None,
+        effect_measure: str = 'r_z',
+        pvalue: str = 'p_adjusted',
+        pvalue_level: float = 0.05,
+        figsize: Tuple[int, int] = (14, 3),
+):
+    """
+    Plots a post hoc analysis grid with rank-biserial correlation values for comparisons
+    across different variables. The grid visually presents significant comparisons
+    (highlighted as distinct markers) and includes reference lines and legends for
+    better interpretability.
+
+    :param path: Path to the CSV file containing the post hoc analysis data.
+                 The file must include specific columns required for plotting.
+    :type path: pathlib.Path
+    :param perception: Title or description to be placed at the top of the grid.
+    :type perception: str
+    :param output_path: Optional path where the plot will be saved. If not provided,
+                        the plot will only be displayed.
+    :type output_path: Optional[pathlib.Path]
+    :param effect_measure: Column name in the data file corresponding to the effect size
+                           measure to be plotted, defaults to 'r_z'.
+    :type effect_measure: str
+    :param pvalue: Column name in the data file containing p-values for comparisons,
+                   defaults to 'p_adjusted'.
+    :type pvalue: str
+    :param pvalue_level: Threshold value for considering a p-value as significant,
+                         defaults to 0.05.
+    :type pvalue_level: float
+    :param figsize: Tuple specifying the dimensions of the entire grid figure,
+                    defaults to (14, 3).
+    :type figsize: Tuple[int, int]
+    :return: None
+    """
+    # Validate file existence
+    if not path.is_file():
+        raise ValueError(f'File {path} does not exist. Unable to plot.')
+    # Load data
+    df = pd.read_csv(path)
+    # Validate required columns
+    required_columns = ['group1', 'group2', 'variable', effect_measure, pvalue]
+    if not all(col in df.columns for col in required_columns):
+        raise ValueError(f'DataFrame must contain columns: {required_columns}')
+    # Create comparison column
+    df['comparison'] = df['group1'] + ' vs ' + df['group2']
+    comparisons = df['comparison'].unique()
+    variables = df['variable'].unique()
+    # Prepare grid dimensions
+    n_vars = len(variables)
+    n_cols = 2
+    n_rows = int(np.ceil(n_vars / n_cols))
+    # Assign colors to comparisons
+    cmap = plt.get_cmap('tab10')
+    colors = {comp: cmap(i % 10) for i, comp in enumerate(comparisons)}
+    # Create subplots
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(14, 3 * n_rows), sharex=False, sharey=True)
+    axes = np.array(axes).flatten()  # Ensure axes is a flat array
+
+    fig.suptitle(perception,
+                 x=0.01,  # 1% from left
+                 y=0.99,  # 99% from bottom (i.e. top)
+                 ha='left',
+                 va='top',
+                 fontsize=22)
+
+    # Plot each variable
+    for ax, var in zip(axes, variables):
+        sub = df[df['variable'] == var]
+        for i, comp in enumerate(comparisons):
+            comp_data = sub[sub['comparison'] == comp]
+            if comp_data.empty:
+                continue
+            y = comp_data['r_rank_biserial'].values[0]
+            x = i  # Index for horizontal spacing
+            # Plot all points with standard marker
+            # Highlight significant results (p-value <= pvalue_level)
+            if comp_data[pvalue].values[0] <= pvalue_level:
+                marker = '*'
+                # ax.scatter(x, y, color=colors[comp], s=150, marker='*', edgecolors='black', linewidth=0.5)
+            else:
+                marker = '.'
+            ax.scatter(x, y,
+                       color=colors[comp],
+                       s=100,
+                       alpha=0.8,
+                       marker=marker,
+                       label=comp if var == variables[0] else None)
+        # Add reference line and styling
+        ax.axhline(0, linestyle='--', color='gray', alpha=0.5)
+        ax.set_title(var, fontsize=12)
+        # ax.set_xticks(range(len(comparisons)))
+        ax.set_xticks([])  # remove x-tick labels
+        # ax.set_xticklabels(comparisons, rotation=45, ha='right', fontsize=10)
+        ax.set_ylabel('Rank-biserial correlation ($r_{\mathrm{rb}}$)', fontsize=10)
+        ax.grid(True, linestyle='--', alpha=0.3)
+    # Hide unused subplots
+    for extra_ax in axes[n_vars:]:
+        extra_ax.axis('off')
+    # Add legend
+    handles = [plt.Line2D([0], [0], marker='o', linestyle='', color=colors[comp], label=comp, markersize=8)
+               for comp in comparisons]
+    fig.legend(handles=handles, loc='upper center', ncol=min(len(comparisons), 3), frameon=True,
+               fontsize=10)
+    # Adjust layout to prevent overlap
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    # Save plot if output_path is provided
+    if output_path:
+        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.show()
+
+
+
 # %% main
 if __name__ == '__main__':
     osa_mapper = {
@@ -703,10 +816,11 @@ if __name__ == '__main__':
     # ===================
     #%% Prepare data
     df = compute_deltas(df, columns_compare)
-
-    if (not (path_output.joinpath('kruskal_tests.csv').is_file()) or
-            not(path_output.joinpath('pairwise_tests.csv')) or
-            not (path_output.joinpath('binary_tests.csv'))):
+    #
+    # if (not (path_output.joinpath('kruskal_tests.csv').is_file()) or
+    #         not(path_output.joinpath('pairwise_tests.csv')) or
+    #         not (path_output.joinpath('binary_tests.csv'))):
+    if True:
         # Run statistical tests
         df_paired_results = paired_tests(df,
                                          pre_binary_question='presleep_physical_complaints_today',
@@ -898,7 +1012,24 @@ if __name__ == '__main__':
 
             df_posthoc.to_csv(path_output / f"posthoc_kw_by_{perception_var}.csv", index=False)
 
+
+        # plots instead of tables
+        for perception_var in ['Feels Sleepy', 'Feels Tired', 'Feels Alert']:
+            # perception_var = 'Feels Sleepy'
+            file = path_output / f"posthoc_kw_by_{perception_var}.csv"
+            plot_posthoc_grid(path=file,
+                              perception=perception_var,
+                              output_path=path_output.joinpath(f'posthoc_kw_by_{perception_var}.png'),
+                              effect_measure='r_z',
+                              pvalue='p_adjusted',
+                              figsize=(14,3)
+                              )
+
             # Save or analyze df_kw and df_posthoc
+
+
+
+
 
     # %% regresion based model
     import statsmodels.formula.api as smf
@@ -1098,4 +1229,7 @@ if __name__ == '__main__':
     # * Use **effect sizes** to show **distributional differences** and **ordinal regression** to test **adjusted predictive effects**.
     #
     # Let me know if you'd like a visual comparing the results of the two methods side by side!
+
+    # %% Testing plots
+
 
